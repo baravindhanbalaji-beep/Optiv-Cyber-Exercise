@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Smart File Analyzer</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #f8f9fa;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    .drop-zone {
+      border: 3px dashed #6c63ff;
+      border-radius: 20px;
+      width: 400px;
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      background: white;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .drop-zone.dragover {
+      background-color: #e9e8ff;
+    }
+    .hidden {
+      display: none;
+    }
+    .output {
+      margin-top: 20px;
+      width: 400px;
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    pre {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+  </style>
+</head>
+<body>
+  <h1>Smart File Analyzer</h1>
+  <p>Drop your PDF, PPT, Excel, or Image below</p>
+
+  <div class="drop-zone" id="dropZone">
+    <p>Drag & Drop your file here</p>
+    <p>or click to browse</p>
+    <input type="file" id="fileInput" class="hidden" />
+  </div>
+
+  <div class="output hidden" id="output">
+    <h3>Uploaded File Details</h3>
+    <p><strong>Name:</strong> <span id="fileName"></span></p>
+    <p><strong>Type:</strong> <span id="fileType"></span></p>
+    <h4>Description:</h4>
+    <pre id="fileDescription"></pre>
+    <h4>Key Findings:</h4>
+    <pre id="keyFindings"></pre>
+  </div>
+
+  <script>
+    const dropZone = document.getElementById("dropZone");
+    const fileInput = document.getElementById("fileInput");
+    const outputDiv = document.getElementById("output");
+
+    dropZone.addEventListener("click", () => fileInput.click());
+
+    dropZone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropZone.classList.add("dragover");
+    });
+
+    dropZone.addEventListener("dragleave", () => {
+      dropZone.classList.remove("dragover");
+    });
+
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropZone.classList.remove("dragover");
+      const file = e.dataTransfer.files[0];
+      handleFileUpload(file);
+    });
+
+    fileInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      handleFileUpload(file);
+    });
+
+    async function handleFileUpload(file) {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("http://localhost:5000/upload", {
+        method: "POST",
+        body: formData
+      });
+
+      const data = await res.json();
+
+      if (data.error) {
+        alert("❌ " + data.error);
+        return;
+      }
+
+      document.getElementById("fileName").innerText = data.filename;
+      document.getElementById("fileType").innerText = data.file_type;
+      document.getElementById("fileDescription").innerText = data.file_description;
+      document.getElementById("keyFindings").innerText = data.key_findings;
+      outputDiv.classList.remove("hidden");
+    }
+  </script>
+</body>
+</html>
